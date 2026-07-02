@@ -46,7 +46,10 @@ mod inner {
             return;
         }
 
-        logger.info(&format!("[frida] found {} WeChatAppEx.exe processes", wmpf.len()));
+        logger.info(&format!(
+            "[frida] found {} WeChatAppEx.exe processes",
+            wmpf.len()
+        ));
 
         let parent_pid = find_most_common_pid(&wmpf);
         let pid = match parent_pid {
@@ -119,7 +122,10 @@ mod inner {
             let ppid = if p.ppid > 0 { p.ppid } else { p.pid };
             *counts.entry(ppid).or_insert(0) += 1;
         }
-        counts.into_iter().max_by_key(|&(_, c)| c).map(|(pid, _)| pid)
+        counts
+            .into_iter()
+            .max_by_key(|&(_, c)| c)
+            .map(|(pid, _)| pid)
     }
 
     fn extract_version(processes: &[&crate::frida_ffi::Process], parent_pid: u32) -> Option<u32> {
@@ -129,7 +135,8 @@ mod inner {
         })?;
 
         if !process.path.is_empty() {
-            let numbers: Vec<&str> = process.path
+            let numbers: Vec<&str> = process
+                .path
                 .split(|c: char| !c.is_ascii_digit())
                 .filter(|s| !s.is_empty())
                 .collect();
@@ -171,9 +178,7 @@ mod inner {
             std::env::current_exe()
                 .ok()
                 .and_then(|p| p.parent().map(|d| d.join(&config_name))),
-            std::env::current_dir()
-                .ok()
-                .map(|d| d.join(&config_name)),
+            std::env::current_dir().ok().map(|d| d.join(&config_name)),
         ];
 
         for path in candidates.into_iter().flatten() {
@@ -185,7 +190,10 @@ mod inner {
                 return Ok(content);
             }
         }
-        Err(format!("version config not found: addresses.{}.json", version))
+        Err(format!(
+            "version config not found: addresses.{}.json",
+            version
+        ))
     }
 }
 
@@ -194,7 +202,9 @@ mod inner {
     use super::*;
     pub async fn run(_options: CliOptions, logger: Arc<Logger>) {
         logger.error("[frida] frida integration not available (build with --features frida-link)");
-        logger.info("[frida] download frida-core devkit and build with: cargo build --features frida-link");
+        logger.info(
+            "[frida] download frida-core devkit and build with: cargo build --features frida-link",
+        );
     }
 }
 

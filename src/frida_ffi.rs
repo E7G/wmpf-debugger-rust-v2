@@ -97,10 +97,7 @@ extern "C" {
 
     pub fn g_object_unref(object: gpointer);
     pub fn g_error_free(error: *mut GError);
-    pub fn g_hash_table_lookup(
-        hash_table: *mut GHashTable,
-        key: gpointer,
-    ) -> gpointer;
+    pub fn g_hash_table_lookup(hash_table: *mut GHashTable, key: gpointer) -> gpointer;
     pub fn g_variant_get_string(value: gpointer, length: *mut usize) -> *const gchar;
     pub fn g_variant_get_uint32(value: gpointer) -> u32;
 }
@@ -138,7 +135,9 @@ unsafe impl Sync for DeviceManager {}
 
 impl Drop for DeviceManager {
     fn drop(&mut self) {
-        unsafe { g_object_unref(self.inner as gpointer); }
+        unsafe {
+            g_object_unref(self.inner as gpointer);
+        }
     }
 }
 
@@ -172,17 +171,23 @@ impl DeviceManager {
         let size = unsafe { frida_device_list_size(device_list) };
         for i in 0..size {
             let device = unsafe { frida_device_list_get(device_list, i) };
-            if device.is_null() { continue; }
+            if device.is_null() {
+                continue;
+            }
 
             // FRIDA_DEVICE_TYPE_LOCAL = 0
             if unsafe { frida_device_get_dtype(device) } == 0 {
                 let result = Device { inner: device };
-                unsafe { g_object_unref(device_list as gpointer); }
+                unsafe {
+                    g_object_unref(device_list as gpointer);
+                }
                 return Ok(result);
             }
         }
 
-        unsafe { g_object_unref(device_list as gpointer); }
+        unsafe {
+            g_object_unref(device_list as gpointer);
+        }
         Err("local device not found".into())
     }
 }
@@ -196,7 +201,9 @@ unsafe impl Sync for Device {}
 
 impl Drop for Device {
     fn drop(&mut self) {
-        unsafe { g_object_unref(self.inner as gpointer); }
+        unsafe {
+            g_object_unref(self.inner as gpointer);
+        }
     }
 }
 
@@ -204,7 +211,9 @@ impl Device {
     pub fn enumerate_processes(&self) -> Result<Vec<Process>, String> {
         let options = unsafe { frida_process_query_options_new() };
         // FRIDA_SCOPE_METADATA = 1
-        unsafe { frida_process_query_options_set_scope(options, 1); }
+        unsafe {
+            frida_process_query_options_set_scope(options, 1);
+        }
 
         let mut error: *mut GError = std::ptr::null_mut();
         let process_list = unsafe {
@@ -215,7 +224,9 @@ impl Device {
                 &mut error,
             )
         };
-        unsafe { g_object_unref(options as gpointer); }
+        unsafe {
+            g_object_unref(options as gpointer);
+        }
 
         if !error.is_null() {
             return Err(extract_error(error));
@@ -229,13 +240,18 @@ impl Device {
 
         for i in 0..size {
             let process = unsafe { frida_process_list_get(process_list, i) };
-            if process.is_null() { continue; }
+            if process.is_null() {
+                continue;
+            }
 
             let pid = unsafe { frida_process_get_pid(process) };
             let name = unsafe {
                 let ptr = frida_process_get_name(process);
-                if ptr.is_null() { String::new() }
-                else { std::ffi::CStr::from_ptr(ptr).to_string_lossy().to_string() }
+                if ptr.is_null() {
+                    String::new()
+                } else {
+                    std::ffi::CStr::from_ptr(ptr).to_string_lossy().to_string()
+                }
             };
 
             let params = unsafe { frida_process_get_parameters(process) };
@@ -261,10 +277,17 @@ impl Device {
                 }
             }
 
-            processes.push(Process { pid, name, path, ppid });
+            processes.push(Process {
+                pid,
+                name,
+                path,
+                ppid,
+            });
         }
 
-        unsafe { g_object_unref(process_list as gpointer); }
+        unsafe {
+            g_object_unref(process_list as gpointer);
+        }
         Ok(processes)
     }
 
@@ -273,14 +296,18 @@ impl Device {
         let mut error: *mut GError = std::ptr::null_mut();
 
         let session = unsafe {
-            frida_device_attach_sync(
-                self.inner, pid, options, std::ptr::null_mut(), &mut error,
-            )
+            frida_device_attach_sync(self.inner, pid, options, std::ptr::null_mut(), &mut error)
         };
-        unsafe { g_object_unref(options as gpointer); }
+        unsafe {
+            g_object_unref(options as gpointer);
+        }
 
-        if !error.is_null() { return Err(extract_error(error)); }
-        if session.is_null() { return Err("failed to attach".into()); }
+        if !error.is_null() {
+            return Err(extract_error(error));
+        }
+        if session.is_null() {
+            return Err("failed to attach".into());
+        }
 
         Ok(Session { inner: session })
     }
@@ -302,7 +329,9 @@ unsafe impl Sync for Session {}
 
 impl Drop for Session {
     fn drop(&mut self) {
-        unsafe { g_object_unref(self.inner as gpointer); }
+        unsafe {
+            g_object_unref(self.inner as gpointer);
+        }
     }
 }
 
@@ -313,13 +342,20 @@ impl Session {
 
         let script = unsafe {
             frida_session_create_script_sync(
-                self.inner, c_source.as_ptr(),
-                std::ptr::null_mut(), std::ptr::null_mut(), &mut error,
+                self.inner,
+                c_source.as_ptr(),
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                &mut error,
             )
         };
 
-        if !error.is_null() { return Err(extract_error(error)); }
-        if script.is_null() { return Err("failed to create script".into()); }
+        if !error.is_null() {
+            return Err(extract_error(error));
+        }
+        if script.is_null() {
+            return Err("failed to create script".into());
+        }
 
         Ok(Script { inner: script })
     }
@@ -345,8 +381,12 @@ impl Drop for Script {
 impl Script {
     pub fn load(&self) -> Result<(), String> {
         let mut error: *mut GError = std::ptr::null_mut();
-        unsafe { frida_script_load_sync(self.inner, std::ptr::null_mut(), &mut error); }
-        if !error.is_null() { return Err(extract_error(error)); }
+        unsafe {
+            frida_script_load_sync(self.inner, std::ptr::null_mut(), &mut error);
+        }
+        if !error.is_null() {
+            return Err(extract_error(error));
+        }
         Ok(())
     }
 }

@@ -19,7 +19,6 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - run: cargo build --release
-      - run: cargo build --release --features frida-link
 
   fmt:
     runs-on: ubuntu-latest

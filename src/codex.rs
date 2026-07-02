@@ -17,9 +17,7 @@ pub fn buffer_to_hex(buffer: &[u8]) -> String {
 fn zlib_decompress(data: &[u8]) -> Vec<u8> {
     let mut decoder = ZlibDecoder::new(data);
     let mut decompressed = Vec::new();
-    decoder
-        .read_to_end(&mut decompressed)
-        .unwrap_or_default();
+    decoder.read_to_end(&mut decompressed).unwrap_or_default();
     decompressed
 }
 
@@ -50,7 +48,11 @@ pub fn wrap_debug_message_data(
                 method_name: data["method"].as_str().unwrap_or("").to_string(),
                 method_arg_list: data["args"]
                     .as_array()
-                    .map(|a| a.iter().map(|v| v.as_str().unwrap_or("").to_string()).collect())
+                    .map(|a| {
+                        a.iter()
+                            .map(|v| v.as_str().unwrap_or("").to_string())
+                            .collect()
+                    })
                     .unwrap_or_default(),
                 call_id: data["call_id"].as_str().unwrap_or("").to_string(),
             };
@@ -463,7 +465,7 @@ pub fn unwrap_proto_to_data_format(data: &[u8]) -> serde_json::Value {
                 })),
             });
         }
-        3001 | 3002 | 3003 => {
+        3001..=3003 => {
             // EventNotify
             let resp = WaRemoteDebugEventNotify::decode(&*msg.data).unwrap_or_default();
             parsed = serde_json::json!({
@@ -487,11 +489,7 @@ pub fn unwrap_proto_to_data_format(data: &[u8]) -> serde_json::Value {
 }
 
 #[allow(dead_code)]
-pub fn wrap_outgoing_to_proto(
-    _data: &serde_json::Value,
-    request_type: i32,
-    uuid: &str,
-) -> Vec<u8> {
+pub fn wrap_outgoing_to_proto(_data: &serde_json::Value, request_type: i32, uuid: &str) -> Vec<u8> {
     let cmd = request_type_to_cmd(request_type);
     let mut inner_data: Vec<u8> = Vec::new();
 
@@ -508,7 +506,10 @@ pub fn wrap_outgoing_to_proto(
             msg.encode(&mut inner_data).unwrap();
         }
         _ => {
-            eprintln!("error wrapping outgoing object, invalid type {}", request_type);
+            eprintln!(
+                "error wrapping outgoing object, invalid type {}",
+                request_type
+            );
             return Vec::new();
         }
     }

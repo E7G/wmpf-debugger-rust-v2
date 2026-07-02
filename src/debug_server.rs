@@ -60,9 +60,10 @@ pub async fn run_debug_server(
             tokio::spawn(async move {
                 while let Ok(msg) = proxy_rx.recv().await {
                     let mut tx = ws_tx_clone.lock().await;
+                    let op_id = now_nanos() % 100;
                     let raw_payload = serde_json::json!({
                         "jscontext_id": "",
-                        "op_id": (now_nanos() % 100) as u32,
+                        "op_id": op_id,
                         "payload": msg,
                     });
                     let wrapped = crate::codex::wrap_debug_message_data(

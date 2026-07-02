@@ -81,7 +81,8 @@ pub fn parse_cli_options() -> Result<CliOptions, CliError> {
             }
             "--debug-port" => {
                 i += 1;
-                debug_port = parse_port("--debug-port", args.get(i).map(|s| s.as_str()), DEBUG_PORT)?;
+                debug_port =
+                    parse_port("--debug-port", args.get(i).map(|s| s.as_str()), DEBUG_PORT)?;
             }
             "--cdp-port" => {
                 i += 1;

@@ -18,15 +18,18 @@ fn main() -> Result<()> {
 
             if cfg!(target_os = "windows") {
                 for lib in &[
-                    "dnsapi", "iphlpapi", "psapi", "winmm", "ws2_32", "advapi32",
-                    "crypt32", "gdi32", "kernel32", "ole32", "secur32", "shell32",
-                    "shlwapi", "user32", "setupapi",
+                    "dnsapi", "iphlpapi", "psapi", "winmm", "ws2_32", "advapi32", "crypt32",
+                    "gdi32", "kernel32", "ole32", "secur32", "shell32", "shlwapi", "user32",
+                    "setupapi",
                 ] {
                     println!("cargo:rustc-link-lib=dylib={}", lib);
                 }
             }
         } else {
-            println!("cargo:warning=frida-devkit not found at {}. Set FRIDA_DEVKIT_PATH.", devkit_path.display());
+            println!(
+                "cargo:warning=frida-devkit not found at {}. Set FRIDA_DEVKIT_PATH.",
+                devkit_path.display()
+            );
         }
     }
 
