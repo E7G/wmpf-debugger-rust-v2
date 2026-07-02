@@ -2,3 +2,4 @@
 /frida-devkit
 *.exe
 *.pdb
+push_to_github.py
